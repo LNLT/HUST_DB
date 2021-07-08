@@ -1,0 +1,37 @@
+1.
+-- 向人员表person插入以下3条数据:
+-- ( 1, 张小敏,13907110001)
+-- ( 2, 李大锤,18907110002)
+-- ( 3, 孙二娘,13307100003)
+-- 请在以下空白处写下完成任务要求的SQL语句：
+use covid19mon;
+
+INSERT INTO person ( id, fullname,telephone )
+                       VALUES
+                    ( 1, "张小敏","13907110001");
+INSERT INTO person ( id, fullname,telephone )
+                       VALUES
+                    ( 2, "李大锤","18907110002");
+INSERT INTO person ( id, fullname,telephone )
+                       VALUES
+                    ( 3, "孙二娘","13307100003");
+/* end of you code */
+
+2.
+-- 从人员表person中删除以下数据:
+-- ( 2, 李大锤,18907110002)
+-- 请在以下空白处写下完成任务要求的SQL语句：
+use  covid19mon;
+DELETE FROM person
+WHERE id=2;
+/* the end of your code */ 
+
+3.
+ -- 请将人员表person中1号人员的电话更改成13607176668
+ -- 请在空白处写下能完成目标任务的SQL语句：
+use covid19mon;
+
+update person
+set telephone="13607176668"
+where id=1;
+/* the end of your code */

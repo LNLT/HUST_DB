@@ -1,0 +1,18 @@
+#ifndef DB_H
+#define DB_H
+#include <QSqlDatabase>
+#include <QDebug>
+#include <QMessageBox>
+#include <QSqlError>
+#include <QSqlQuery>
+
+class db
+{
+public:
+   void connectdb();
+   void closedb();
+private:
+    QSqlDatabase db;
+};
+
+#endif // DB_H

@@ -1,0 +1,235 @@
+-- 1) 查询累计人流量大于30的地点名称和累计人流量，累积人流量请用visitors作标题名称。
+--    查询结果按照人流量从高到低排序，人流量相同时，依地点名称的字典顺序排序。
+--    （注意：同一人多次逛同一地点，去几次算几次）
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select location_name,count(*) as visitors
+from itinerary,location
+where location.id=itinerary.loc_id
+group by loc_id
+having count(*)>30
+order by count(*) desc,location_name;
+/*  end  of  your code  */
+ 
+
+-- 2) 查询每个隔离地及该地正在进行隔离的人数，以number为隔离人数的标题.
+--    查询结果依隔离人数由多到少排序。人数相同时，依隔离地点名排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select location_name,count(*) as "number"
+from isolation_record,isolation_location
+where isolation_location.id=isolation_record.isol_loc_id
+and isolation_record.state=1
+group by location_name
+having count(*)
+order by count(*) desc,location_name;
+/*  end  of  your code  */
+
+ use covid19mon;
+
+-- 3) 查询行程表中所有属于同一个人的接续行程信息。输出内容包括：
+-- 人员编号,姓名,重合时间,起始地点id,起始地点,结束地点id,结束地点。
+-- 查询结果依人员编号排序。
+-- 请用一条SQL语句实现该查询：
+
+select person.id,fullname,telephone,i1.e_time as reclosing_time,i1.loc_id as loc1,loca1.location_name as address1,i2.loc_id as loc2, loca2.location_name as address2
+from person,itinerary i1,itinerary i2,location loca1,location loca2
+where i1.e_time=i2.s_time and i1.p_id=i2.p_id and person.id=i1.p_id and person.id>30 and i1.loc_id=loca1.id and i2.loc_id=loca2.id
+order by person.id,i1.e_time;
+/*  end  of  your code  */
+
+-- 4) 查询充珉瑶和贾涵山的行程情况。查询结果包括：姓名、电话、到过什么地方（地名），何时到达，何时离开 。
+--  列名原样列出，不必用别名。查询结果依人员编号降序排序。
+
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select fullname,telephone,location_name,s_time,e_time
+from person left outer join (itinerary join location) on(person.id=itinerary.p_id and itinerary.loc_id=location.id)
+where  (person.fullname="充珉瑶" or person.fullname="贾涵山")  
+order by person.id desc;
+/*  end  of  your code  */
+
+
+-- 5) 查询地名中带有‘店’字的地点编号和名称。查询结果按地点编号排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select id, location_name
+from location
+where location_name like '%店%'
+order by id;
+/*  end  of  your code  */
+
+-- 6) 新发现一位确诊者，已知他在2021.2.2日20:05:40到21:25:40之间在“活动中心”逗留，
+--    凡在此间在同一地点逗留过的，视为接触者，请查询接触者的姓名和电话。查询结果按姓名排序.
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select fullname,telephone
+from person,itinerary ,location
+where((itinerary.s_time >= '2021-2-2 20:05:40' 
+        and itinerary.s_time <= '2021-2-2 21:25:40' )
+or (itinerary.s_time <= '2021-2-2 20:05:40' 
+    and itinerary.e_time >= '2021-2-2 21:25:40' )
+or (itinerary.e_time >= '2021-2-2 20:05:40'
+    and itinerary.s_time <= '2021-2-2 20:05:40'))
+and person.id=itinerary.p_id 
+and location.id=itinerary.loc_id 
+and location.location_name='活动中心' 
+order by fullname;
+/*  end  of  your code  */
+
+-- 7) 查询正在使用的隔离点名,查询结果按隔离点的编号排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select location_name 
+from isolation_location
+where location_name in(
+    select location_name
+    from isolation_record,isolation_location
+    where isolation_location.id=isolation_record.isol_loc_id
+    and isolation_record.state=1
+    group by location_name
+    having count(*)>0) 
+order by isolation_location.id
+/*  end  of  your code  */
+
+-- 8) 用一条带exists关键字的SQL语句查询前30位有出行记录的人员姓名和电话。查询结果按照人员编号排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select fullname,telephone
+from person 
+where exists (
+    select *
+    from itinerary
+    where itinerary.p_id=person.id 
+)
+order by id
+limit 30;
+/*  end  of  your code  */
+
+-- 9) 写一条带NOT EXISTS 子查询的SQL语句实现下述查询要求：
+--   查询人员表中没有去过地点“Today便利店”的人数。请给统计出的人数命名为number。
+--   请用一条SQL语句实现该查询：
+use covid19mon;
+select count(*) as number
+from person
+where not exists(
+    select *
+    from itinerary,location
+    where person.id=itinerary.p_id
+    and itinerary.loc_id=location.id
+    and location.location_name='Today便利店'
+)
+/*  end  of  your code  */
+
+-- 10) 查询人员表中去过所有地点的人员姓名。查询结果依人员姓名的字典顺序排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select fullname
+from person
+where not exists(
+    select *
+    from  location
+    where not exists(
+        select *
+        from  itinerary
+        where person.id=itinerary.p_id
+        and location.id=itinerary.loc_id
+    )
+)
+order by fullname;
+/*  end  of  your code  */ 
+
+-- 11) 建立反映所有隔离点现状的视图isolation_location_status。
+-- 内容包括：地点编号，隔离地点名，房间容量，已占用量
+-- 请保持原列名不变，已占用量由统计函籹计算得出，该列命名为occupied。 
+-- 正在隔离的人占用着隔离点的位置，隔离结束或已转院的人不占用位置。
+use covid19mon;
+create view isolation_location_status (id,location_name,capacity,occupied)
+as 
+select isolation_location.id,location_name,capacity,count(state) as occupied
+from isolation_location left outer join isolation_record on 
+(isolation_record.isol_loc_id=isolation_location.id and isolation_record.state=1)
+group by isolation_location.id;
+having count(state);
+/*  end  of  your code  */ 
+
+ -- 12) 从视图isolation_location_status中查询各隔离点的剩余空房间的数目。
+--    需要列出的数据项：隔离点名称，剩余房间数。其中剩余房间数为计算得出，请给该列命名为available_rooms
+--    查询结果依隔离点编号排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select location_name,(capacity-occupied)as available_rooms
+from isolation_location_status;
+/*  end  of  your code  */ 
+
+-- 13) 筛查发现，靳宛儿为无症状感染者。现需查询其接触者姓名名单和电话，以便通知并安排隔离。查询结题按姓名排序。
+--    凡行程表中，在同一地点逗留时间与靳宛儿有交集的，均视为接触者。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select fullname,telephone
+from person,(select id from person where fullname='靳宛儿')as per_d
+where exists(
+    select *
+    from itinerary i1,itinerary i2
+    where i1.p_id=person.id
+    and i2.p_id=per_d.id
+    and i1.loc_id=i2.loc_id
+    and not(i1.e_time<i2.s_time or i1.s_time>i2.e_time)
+)
+and person.id!=per_d.id
+order by fullname;
+/*  end  of  your code  */ 
+
+-- 14) 依据密切接触表的内容查询每个地点的密切接触者的数量，列出内容包括：地点名称，密接者人数。
+--     人数由统计获得，列名命名为close_contact_number.查询结果依密接者人数降序排列。
+--     密接者人数相同时，依地点名称排序。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+
+select location_name,count(*) as close_contact_number
+from close_contact,location
+where close_contact.loc_id=location.id
+group by location_name
+having count(*)
+order by count(*) desc,location_name
+/*  end  of  your code  */ 
+
+-- 15) 查询感染人数最多的人员编号，姓名，和被其感染的人数。
+--     感染人数由统计所得，命名为infected_number.
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select case_p_id,fullname,count(*) as infected_number
+from close_contact,person
+where close_contact.case_p_id=person.id
+group by case_p_id
+order by count(*) desc
+limit 1;
+/*  end  of  your code  */
+
+-- 16) 查询2021-02-02 10:00:00到14:00:00期间，行程记录最频繁的3个人的姓名及行程记录条数。
+--     记录条数命名为record_number. 记录数并列的，按姓名顺序排列。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select fullname,count(*) as record_number
+from person,itinerary 
+where person.id=itinerary.p_id
+and not(itinerary.e_time<='2021-2-2 10:00:00'
+or itinerary.s_time>='2021-2-2 14:00:00')
+group by fullname
+order by count(*) desc,fullname
+limit 3;
+/*  end  of  your code  */
+
+-- 17 查询隔离点中，房间数第二多的隔离点名称和房间数。
+--    请用一条SQL语句实现该查询：
+use covid19mon;
+select location_name,capacity
+from isolation_location
+where capacity<(
+    select max(capacity)
+    from isolation_location
+)
+order by capacity desc
+limit 1;
+/*  end  of  your code  */
+
